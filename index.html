@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>最外面那片</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f4f2ee; color: #23211e; line-height: 1.6; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 20px 14px 40px; }
+  h1 { font-size: 26px; letter-spacing: 1px; }
+  .lead { color: #625d55; font-size: 14px; margin: 4px 0 14px; }
+  .card { background: #fff; border-radius: 10px; padding: 14px; border: 1px solid #e0dbd2; margin-bottom: 14px; min-width: 0; }
+  .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 8px; overflow-wrap: anywhere; }
+  .top { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 14px; align-items: start; }
+  label { font-size: 12px; color: #736d64; display: block; overflow-wrap: anywhere; }
+  input, textarea, select { font: inherit; font-size: 14px; padding: 6px 8px; border: 1px solid #c5bdb0; border-radius: 6px; width: 100%; min-width: 0; background: #fff; font-variant-numeric: tabular-nums; }
+  textarea { resize: vertical; min-height: 120px; line-height: 1.55; font-family: ui-monospace, Menlo, "PingFang SC", monospace; }
+  .g2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+  .row { margin-top: 10px; }
+  .bad { border-color: #b3412f !important; background: #fff0ec !important; }
+  button { font: inherit; font-size: 13px; padding: 6px 11px; border-radius: 6px; border: 1px solid #3c4a5c; background: #3c4a5c; color: #fff; cursor: pointer; }
+  button.ghost { background: #fff; color: #3c4a5c; }
+  .presets, .dl { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .err { display: none; background: #fff0ec; border: 1px solid #ecb7aa; color: #8e2b1c; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; overflow-wrap: anywhere; }
+  .muted { color: #847e74; font-size: 12px; }
+  code { font-family: ui-monospace, Menlo, monospace; background: #f1ede6; padding: 0 4px; border-radius: 3px; font-size: 12px; }
+  #summary { font-size: 18px; font-weight: 700; overflow-wrap: anywhere; }
+  #summary.short { color: #8e2b1c; }
+  #facts { margin: 8px 0 0 18px; font-size: 14px; } #facts li { margin: 3px 0; overflow-wrap: anywhere; }
+  /* 清单 */
+  .ck { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px; padding: 9px 0; border-bottom: 1px dashed #e3ddd3; }
+  .ck:last-child { border-bottom: 0; }
+  .ck input[type=checkbox] { width: 18px; height: 18px; margin-top: 3px; accent-color: #3c4a5c; }
+  .ck.done .body { opacity: .45; }
+  .hd { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-variant-numeric: tabular-nums; }
+  .hd b { font-size: 16px; } .hd .w { font-size: 18px; font-weight: 700; }
+  .hd .off { color: #a33a26; font-size: 13px; font-weight: 600; } .hd .sm { color: #847e74; font-size: 12px; }
+  .stack { margin-top: 4px; max-width: 100%; overflow: hidden; }
+  .stack svg { display: block; max-width: 100%; height: auto; }
+  .act { font-size: 13px; color: #4d4840; overflow-wrap: anywhere; } .act em { font-style: normal; color: #2f6a4a; font-weight: 600; } .act s { color: #a33a26; text-decoration: none; font-weight: 600; }
+  .tag { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 8px; background: #f6d5cc; color: #8e2b1c; }
+  table.t { border-collapse: collapse; font-size: 13px; width: 100%; font-variant-numeric: tabular-nums; }
+  table.t th, table.t td { padding: 5px 6px; border-bottom: 1px solid #ebe6de; text-align: right; overflow-wrap: anywhere; }
+  table.t th:first-child, table.t td:first-child { text-align: left; }
+  table.t tr.sum td { font-weight: 700; border-top: 1px solid #c5bdb0; }
+  table.t td.diff { color: #a33a26; }
+  .tw { overflow-x: auto; }
+  table.t td:nth-child(5), table.t td:nth-child(7), table.t th { white-space: nowrap; }
+  .vs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+  .vs div { border: 1px solid #e0dbd2; border-radius: 8px; padding: 8px 10px; min-width: 0; }
+  .vs div.best { border-color: #3c4a5c; background: #f3f5f8; }
+  .vs h3 { font-size: 13px; font-weight: 600; } .vs b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; } .vs p { font-size: 12px; color: #736d64; overflow-wrap: anywhere; }
+  #sugs { display: grid; gap: 8px; }
+  .sug { display: flex; gap: 10px; align-items: center; justify-content: space-between; border: 1px solid #e3ddd3; border-radius: 6px; padding: 8px 10px; }
+  .sug span { min-width: 0; overflow-wrap: anywhere; font-size: 14px; } .sug button { flex: none; }
+  .how { font-size: 13px; } .how p { margin: 6px 0; }
+  @media (max-width: 760px) { .top { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 480px) { .vs { grid-template-columns: minmax(0, 1fr); } .sug { flex-direction: column; align-items: stretch; } #summary { font-size: 16px; } table.t { min-width: 520px; font-size: 12px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>最外面那片</h1>
+  <p class="lead">练深蹲、硬拉前那一串热身组，每组都得在杠铃两头换片。片重的在里、轻的在外，想换里面那片，就得先把外面的拆下来。把你有的片和今天要练的几组写下来，这里给出每组每头装哪几片、<b>上一组换到这一组要拆哪片、装哪片</b>，并挑一串让总共动片次数最少的装法。默认例子是虚构的。</p>
+
+  <div class="top">
+    <div class="card">
+      <h2>杠和片</h2>
+      <div class="g2">
+        <div><label for="unit">单位</label><select id="unit"><option value="kg">公斤 kg</option><option value="lb">磅 lb</option></select></div>
+        <div><label for="bar">杠重</label><input id="bar" inputmode="decimal" maxlength="6"></div>
+        <div><label for="collar">一对卡扣（没有写 0）</label><input id="collar" inputmode="decimal" maxlength="5"></div>
+        <div><label for="top">顶组重量（整根）</label><input id="top" inputmode="decimal" maxlength="6"></div>
+      </div>
+      <div class="row">
+        <label for="plates">每行一种片：片重 几副（一副 = 两头各一片）</label>
+        <textarea id="plates" maxlength="300" spellcheck="false"></textarea>
+      </div>
+      <div class="row">
+        <label for="sets">每行一组：目标 [次数] [×组数]，目标写「空杆」、百分比（顶组的几成）或重量</label>
+        <textarea id="sets" maxlength="400" spellcheck="false" style="min-height:150px"></textarea>
+        <p class="muted" style="margin-top:4px">例：<code>60% 5</code> = 顶组的 60%，做 5 次；<code>100% 5 ×3</code> = 顶组 5 次做 3 组；<code>70 3</code> = 直接 70。</p>
+      </div>
+      <div class="row"><label for="mode">凑不上时</label><select id="mode"><option value="near">取最接近的（一样近取轻的）</option><option value="down">取不超过目标的最重的</option></select></div>
+      <div class="presets" id="presets"></div>
+    </div>
+    <div>
+      <div class="err" id="error"></div>
+      <div id="out">
+        <div class="card">
+          <div id="summary"></div>
+          <ul id="facts"></ul>
+        </div>
+        <div class="card">
+          <h2>装片清单（每头，从里到外；两头一样装）</h2>
+          <div id="list"></div>
+          <p class="muted" style="margin-top:6px">打勾只是练的时候自己记，不保存。<span style="color:#2f6a4a;font-weight:600">绿字</span> = 这一步要装上的，<span style="color:#a33a26;font-weight:600">红字</span> = 先从外面拆下来的。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="out2">
+    <div class="card">
+      <h2>和「每组都用片数最少」比一比</h2>
+      <div class="vs" id="vs"></div>
+      <div class="tw"><table class="t" id="tbl"></table></div>
+    </div>
+    <div class="card" id="sugCard">
+      <h2>改一个条件（点一下代回重算）</h2>
+      <div id="sugs"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>带走结果</h2>
+    <div class="dl">
+      <button id="dlCSV">CSV 明细</button><button id="dlMD">Markdown 清单</button><button id="dlPNG">结果卡 PNG</button><button id="dlJSON" class="ghost">JSON 备份</button>
+      <button id="reset" class="ghost">恢复默认</button>
+    </div>
+    <p class="muted" style="margin-top:6px">输入自动保存在这台设备的浏览器里，刷新还在。</p>
+  </div>
+
+  <div class="card how">
+    <h2>怎么算的</h2>
+    <p><b>每组目标</b>：百分比组 = 顶组 × 百分比，按 0.01 取整；每头要加 =（目标 − 杠 − 卡扣）÷ 2。</p>
+    <p><b>每头能凑出多少</b>：每种片每头最多用「副数」片，把所有能凑出的重量列出来；凑不上时按你选的规则取最接近的或不超过的。</p>
+    <p><b>动几次片</b>：片按重的在里、轻的在外装。从上一组换到这一组，要从最外面一片片拆，拆到两组里层一样为止，再把这一组多出来的装上；拆一片、装一片各算一次。</p>
+    <p><b>挑装法</b>：同一个重量常有几种装法（比如 20 可以是一片 20，也可以是 15 + 5）。把每组所有装法都列出来，用动态规划挑一串，让从空杆装起、换到最后一组、再拆光的总次数最少；次数一样时取前面先找到的（重片多的）。</p>
+    <p class="muted">只算重量和换片次数，不给训练计划和动作建议；不处理片的实际误差和不按「重的在里」的装法；杠和片要写同一种单位。默认例子是虚构的。</p>
+  </div>
+</div>
+
+  <script>
+/* 最外面那片 · 计算核心
+ * 练力量前要做一串热身组（40%、55%、70%……顶组）。每组都要给杠铃两头装片，家里或健身房的片是有限的。
+ * 输入：杠重、一对卡扣重、有哪些片（片重 几副，一副 = 两头各一片）、顶组重量、各组（目标 [次数] [×组数]）、凑不上时就近还是不超过。
+ * 1. 每组目标：空杆 / 顶组 × 百分比 / 直接写重量。每头要加 need = (目标 − 杠 − 卡扣) ÷ 2。
+ * 2. 每头能凑出的重量：有界背包（每种片每头最多「副数」片）。就近 = 离 need 最近（一样近取轻的）；不超过 = ≤ need 的最大值。
+ * 3. 同一个重量常有几种装法（20 = 20 或 10+10）。片按惯例重的在里、轻的在外，换片只能从最外面拆。
+ *    相邻两组之间每头要动的片数 = 上一组拆到两者相同的里层为止拆下的片 + 再装上的片。
+ *    在所有「重量已定」的装法里，用动态规划选一串装法，让从空杆装上、一路换到最后一组、再拆光的总片数最少。
+ * 4. 对照：每组都用片数最少的装法（常见的配片计算器就是这样给的），同样数总片数。
+ * 不做：动作与训练计划建议、单位换算（杠和片写同一种单位）、片的真实误差、里外顺序不按「重的在里」的装法。默认例子是虚构的。 */
+(function (root) {
+  'use strict';
+  function Bad(message, field) { const e = new Error(message); e.field = field; return e; }
+  const KEYS = ['unit', 'bar', 'collar', 'plates', 'top', 'sets', 'mode'];
+  const W = /^\d{1,3}(\.\d{1,2})?$/;
+  const MAX_KIND = 8, MAX_PAIRS = 10, MAX_SETS = 12, MAX_WAYS = 1500;
+  const c2 = (v) => Math.round(v * 100);
+  const fw = (c) => { const v = Math.round(c) / 100; return Number.isInteger(v) ? String(v) : String(+v.toFixed(2)); };
+  const tidy = (s) => String(s).replace(/[，,；;、\t]/g, ' ').replace(/[＊*Xx]/g, '×').replace(/％/g, '%').replace(/\s*×\s*/g, ' ×').replace(/\s+/g, ' ').trim();
+
+  function wnum(t, lo, hi, what, field) {
+    if (!W.test(t)) throw Bad(what + '「' + String(t).slice(0, 8) + '」要写数字（最多两位小数）', field);
+    const v = +t;
+    if (v < lo || v > hi) throw Bad(what + ' ' + t + ' 要在 ' + lo + ' 到 ' + hi + ' 之间', field);
+    return c2(v);
+  }
+  const HEAD = /^(片重|片|重量|目标|百分比|每组|组)$/;
+  function parse(inp) {
+    const s = (k) => String(inp[k] == null ? '' : inp[k]).trim();
+    const unit = s('unit') === 'lb' ? 'lb' : 'kg';
+    const mode = s('mode') === 'down' ? 'down' : 'near';
+    const bar = wnum(s('bar'), 0, 100, '杠重', 'bar');
+    const collar = s('collar') === '' ? 0 : wnum(s('collar'), 0, 20, '一对卡扣', 'collar');
+    const top = wnum(s('top'), 1, 600, '顶组重量', 'top');
+    /* 片 */
+    const pl = s('plates').split('\n').map(tidy).filter(Boolean);
+    if (pl.length && HEAD.test(pl[0].split(' ')[0])) pl.shift();
+    if (!pl.length) throw Bad('片一种都没写：每行写「片重 几副」，比如「20 2」', 'plates');
+    if (pl.length > MAX_KIND) throw Bad('片最多 ' + MAX_KIND + ' 种（现在 ' + pl.length + ' 种）', 'plates');
+    const kinds = [];
+    pl.forEach((ln, i) => {
+      const t = ln.split(' ');
+      if (t.length !== 2) throw Bad('片第 ' + (i + 1) + ' 行写「片重 几副」，比如「20 2」（现在「' + ln.slice(0, 12) + '」）', 'plates');
+      const w = wnum(t[0], 0.25, 50, '片第 ' + (i + 1) + ' 行的片重', 'plates');
+      if (!/^\d{1,2}$/.test(t[1]) || +t[1] > MAX_PAIRS) throw Bad('「' + t[0] + '」的副数要写 0 到 ' + MAX_PAIRS + ' 的整数（现在「' + t[1].slice(0, 6) + '」）', 'plates');
+      if (kinds.some((k) => k.w === w)) throw Bad('片重「' + t[0] + '」写了两行，合成一行', 'plates');
+      kinds.push({ w, n: +t[1] });
+    });
+    kinds.sort((a, b) => b.w - a.w);
+    /* 组 */
+    const sl = s('sets').split('\n').map(tidy).filter(Boolean);
+    if (sl.length && HEAD.test(sl[0].split(' ')[0])) sl.shift();
+    if (!sl.length) throw Bad('组一行都没写：每行写「目标 [次数] [×组数]」，比如「60% 5」', 'sets');
+    if (sl.length > MAX_SETS) throw Bad('组最多 ' + MAX_SETS + ' 行（现在 ' + sl.length + ' 行）', 'sets');
+    const sets = [];
+    sl.forEach((ln, i) => {
+      const t = ln.split(' '), row = i + 1;
+      let label, target, pctv = null;
+      if (t[0] === '空杆') { target = bar + collar; label = '空杆'; }
+      else if (/%$/.test(t[0])) {
+        const p = t[0].slice(0, -1);
+        if (!/^\d{1,3}(\.\d)?$/.test(p) || +p <= 0 || +p > 120) throw Bad('组第 ' + row + ' 行的百分比「' + t[0].slice(0, 8) + '」要在 0 到 120% 之间（最多一位小数）', 'sets');
+        pctv = +p; target = Math.round(top * pctv / 100); label = p + '%';
+      } else {
+        if (!W.test(t[0])) throw Bad('组第 ' + row + ' 行开头要写「空杆」、百分比（如 60%）或重量（如 70）（现在「' + t[0].slice(0, 8) + '」）', 'sets');
+        target = wnum(t[0], 0, 600, '组第 ' + row + ' 行的重量', 'sets'); label = fw(target);
+      }
+      let reps = null, times = 1;
+      t.slice(1).forEach((x) => {
+        if (/^×\d{1,2}$/.test(x) || /^\d{1,2}组$/.test(x)) { times = +x.replace(/[×组]/g, ''); if (times < 1 || times > 10) throw Bad('组第 ' + row + ' 行的组数要在 1 到 10 之间', 'sets'); }
+        else if (/^\d{1,2}(次)?$/.test(x) && reps == null) { reps = +x.replace('次', ''); if (reps < 1) throw Bad('组第 ' + row + ' 行的次数要大于 0', 'sets'); }
+        else throw Bad('组第 ' + row + ' 行的「' + x.slice(0, 8) + '」看不懂：写「目标 次数 ×组数」，比如「100% 5 ×3」', 'sets');
+      });
+      sets.push({ label, pct: pctv, target, reps, times, empty: t[0] === '空杆' });
+    });
+    return { unit, mode, bar, collar, top, kinds, sets };
+  }
+
+  /* ── 每头能凑出哪些重量：reach[i][r] = 只用第 i 种及更轻的片能否正好凑出 r（单位 0.01） ── */
+  function reachTable(kinds, maxR) {
+    const K = kinds.length, R = [];
+    R[K] = new Uint8Array(maxR + 1); R[K][0] = 1;
+    for (let i = K - 1; i >= 0; i--) {
+      const a = new Uint8Array(maxR + 1), w = kinds[i].w, n = kinds[i].n;
+      for (let r = 0; r <= maxR; r++) {
+        for (let m = 0; m <= n && m * w <= r; m++) if (R[i + 1][r - m * w]) { a[r] = 1; break; }
+      }
+      R[i] = a;
+    }
+    return R;
+  }
+  /* 所有装法（片从重到轻排，即从里到外），只走能凑成的分支 */
+  function waysFor(kinds, R, r) {
+    const out = [], cur = [];
+    (function go(i, rem) {
+      if (out.length > MAX_WAYS) return;
+      if (i === kinds.length) { if (rem === 0) out.push(cur.slice()); return; }
+      const w = kinds[i].w;
+      for (let m = Math.min(kinds[i].n, Math.floor(rem / w)); m >= 0; m--) {
+        if (!R[i + 1][rem - m * w]) continue;
+        for (let j = 0; j < m; j++) cur.push(w);
+        go(i + 1, rem - m * w);
+        cur.length -= m;
+      }
+    })(0, r);
+    return out;
+  }
+  /* 换片：从最外面拆到相同的里层，再装上（每头的片数） */
+  function moves(a, b) {
+    let p = 0; while (p < a.length && p < b.length && a[p] === b[p]) p++;
+    return { off: a.slice(p), on: b.slice(p), n: a.length - p + b.length - p };
+  }
+  const fewest = (ws) => ws.reduce((best, x) => (best == null || x.length < best.length ? x : best), null); /* 片数一样时取先出现的 = 重片多的 */
+
+  /* needTwo = 两头一共要加多少（0.01 单位，整数）。比较 |2r − needTwo|，避免半格小数。
+   * 就近：最近的，一样近取轻的；不超过：2r ≤ needTwo 的最大值。全装上还不够 → short。 */
+  function pick(P, R, maxR, needTwo) {
+    if (needTwo <= 0) return { side: 0, short: false };
+    const short = needTwo > 2 * maxR;
+    let best = 0, bd = Infinity;
+    for (let r = 0; r <= maxR; r++) {
+      if (!R[0][r]) continue;
+      const d = 2 * r - needTwo;
+      if (P.mode === 'down') { if (d <= 0) best = r; else break; }
+      else { if (Math.abs(d) < bd) { bd = Math.abs(d); best = r; } else if (d > 0) break; }
+    }
+    return { side: best, short };
+  }
+
+  function calculate(inp) {
+    const P = typeof inp.kinds === 'object' && Array.isArray(inp.kinds) ? inp : parse(inp);
+    const maxR = P.kinds.reduce((s, k) => s + k.w * k.n, 0);
+    const R = reachTable(P.kinds, maxR);
+    const rows = P.sets.map((st) => {
+      const needTwo = st.target - P.bar - P.collar;
+      const pk = pick(P, R, maxR, needTwo);
+      const actual = P.bar + P.collar + 2 * pk.side;
+      const ways = waysFor(P.kinds, R, pk.side);
+      if (ways.length > MAX_WAYS) throw Bad('「' + st.label + '」这一组每头的装法超过 ' + MAX_WAYS + ' 种，片的种类或副数太多，减少几副再算', 'plates');
+      return Object.assign({}, st, { need: needTwo / 2, side: pk.side, actual, diff: actual - st.target, short: pk.short, light: needTwo < 0, ways });
+    });
+    /* 动态规划：从空杆开始，经过每组，最后拆光 */
+    const n = rows.length;
+    let cost = [0], from = [], prevW = [[]];
+    for (let i = 0; i < n; i++) {
+      const ws = rows[i].ways, c = new Array(ws.length).fill(Infinity), fr = new Array(ws.length).fill(-1);
+      for (let j = 0; j < ws.length; j++) for (let k = 0; k < prevW.length; k++) {
+        const a = prevW[k], b = ws[j]; let q = 0; while (q < a.length && q < b.length && a[q] === b[q]) q++;
+        const v = cost[k] + a.length + b.length - 2 * q;
+        if (v < c[j]) { c[j] = v; fr[j] = k; }
+      }
+      cost = c; from.push(fr); prevW = ws;
+    }
+    let bestJ = 0, best = Infinity;
+    prevW.forEach((w, j) => { const v = cost[j] + w.length; if (v < best) { best = v; bestJ = j; } });
+    const choice = new Array(n);
+    for (let i = n - 1, j = bestJ; i >= 0; i--) { choice[i] = j; j = from[i][j]; }
+    const plan = choice.map((j, i) => rows[i].ways[j]);
+    const naive = rows.map((r) => fewest(r.ways));
+    const walk = (seq) => { let prev = [], tot = 0; const steps = seq.map((x) => { const m = moves(prev, x); prev = x; tot += m.n; return m; }); return { steps, tot: tot + prev.length, strip: prev.length }; };
+    const A = walk(plan), B = walk(naive);
+    rows.forEach((r, i) => { r.stack = plan[i]; r.step = A.steps[i]; r.naive = naive[i]; r.nstep = B.steps[i]; r.nWays = r.ways.length; delete r.ways; });
+    const maxDiff = rows.reduce((m, r) => Math.max(m, Math.abs(r.diff)), 0);
+    const exact = rows.filter((r) => r.diff === 0 && !r.light).length;
+    const R2 = { P, rows, moves: A.tot, strip: A.strip, naiveMoves: B.tot, naiveStrip: B.strip, maxDiff, exact, maxSide: maxR, smallest: P.kinds.filter((k) => k.n > 0).reduce((m, k) => Math.min(m, k.w), Infinity) };
+    R2.short = rows.filter((r) => r.short); R2.light = rows.filter((r) => r.light);
+    R2.summary = summary(R2); R2.facts = facts(R2);
+    return R2;
+  }
+
+  const u = (P) => ' ' + P.unit;
+  function summary(R) {
+    const P = R.P;
+    if (R.short.length) return '片不够：「' + R.short[0].label + '」要 ' + fw(R.short[0].target) + u(P) + '，现有的片全装上也只有 ' + fw(P.bar + P.collar + 2 * R.maxSide) + u(P);
+    const save = R.naiveMoves - R.moves;
+    return '按这串装法，每头一共动 ' + R.moves + ' 次片' + (save > 0 ? '，比每组都用最少片数少动 ' + save + ' 次' : '，和每组都用最少片数一样少') + (R.maxDiff ? '；凑不上的组最多差 ' + fw(R.maxDiff) + u(P) : '；每组都正好凑上');
+  }
+  function facts(R) {
+    const P = R.P, f = [];
+    f.push('杠 ' + fw(P.bar) + (P.collar ? ' + 卡扣 ' + fw(P.collar) : '') + u(P) + '，现有的片每头最多加 ' + fw(R.maxSide) + u(P) + '（整根最重 ' + fw(P.bar + P.collar + 2 * R.maxSide) + u(P) + '）');
+    f.push(R.rows.length + ' 行组里 ' + R.exact + ' 行正好凑上' + (R.maxDiff ? '，差得最多的是「' + R.rows.reduce((a, b) => (Math.abs(b.diff) > Math.abs(a.diff) ? b : a)).label + '」' : ''));
+    f.push('每头动片：从空杆装上到最后一组 ' + (R.moves - R.strip) + ' 次，练完拆光 ' + R.strip + ' 次；两头合计 ' + R.moves * 2 + ' 次');
+    f.push('每组都用片数最少的装法：每头 ' + R.naiveMoves + ' 次（两头 ' + R.naiveMoves * 2 + ' 次）');
+    if (R.light.length) f.push('「' + R.light[0].label + '」比空杆' + (P.collar ? '加卡扣' : '') + '还轻，只能空杆');
+    return f;
+  }
+
+  /* ── 建议：每条都能代回输入、并且确实改变结果 ── */
+  function platesText(P, kinds) { return '片重 几副\n' + kinds.slice().sort((a, b) => b.w - a.w).map((k) => fw(k.w) + ' ' + k.n).join('\n'); }
+  function suggestions(inp, R) {
+    const P = R.P, out = [];
+    const score = (r) => [r.short.length, r.rows.reduce((s, x) => s + Math.abs(x.diff), 0), r.moves];
+    const better = (a, b) => { for (let i = 0; i < 3; i++) { if (a[i] !== b[i]) return a[i] < b[i]; } return false; };
+    const base = score(R);
+    const tryIt = (id, patch, textFn) => {
+      const nx = Object.assign({}, inp, patch);
+      let r2; try { r2 = calculate(nx); } catch (e) { return; }
+      if (!better(score(r2), base)) return;
+      out.push({ id, apply: nx, text: textFn(r2), after: { moves: r2.moves, maxDiff: r2.maxDiff, short: r2.short.length } });
+    };
+    /* 1. 多一副片：只试最能减少偏差的那一种 */
+    const STD = P.unit === 'lb' ? [45, 35, 25, 10, 5, 2.5] : [25, 20, 15, 10, 5, 2.5, 1.25, 0.5];
+    {
+      let bestAdd = null;
+      STD.map(c2).forEach((w) => {
+        const ks = P.kinds.map((k) => Object.assign({}, k)); const k = ks.find((x) => x.w === w);
+        if (k) { if (k.n >= MAX_PAIRS) return; k.n++; } else { if (ks.length >= MAX_KIND) return; ks.push({ w, n: 1 }); }
+        let r2; try { r2 = calculate(Object.assign({}, P, { kinds: ks.sort((a, b) => b.w - a.w) })); } catch (e) { return; }
+        const sc = score(r2);
+        if (better(sc, base) && (!bestAdd || better(sc, bestAdd.sc))) bestAdd = { w, ks, sc, r2 };
+      });
+      if (bestAdd) tryIt('addPlate', { plates: platesText(P, bestAdd.ks) }, (r2) => '多一副 ' + fw(bestAdd.w) + ' 的片：' + (r2.short.length ? '还差得少一点' : (R.short.length ? '顶组能装上，' : '') + (r2.maxDiff ? '最多差 ' + fw(r2.maxDiff) + u(P) : '每组都正好凑上')) + '（每头动 ' + r2.moves + ' 次）');
+    }
+    /* 2. 顶组改一点，让百分比组都凑得正好：在 ±5 以内按最小片的两倍为步长找 */
+    if (R.maxDiff > 0 && !R.short.length && R.rows.some((r) => r.pct != null)) {
+      const step = Math.max(50, 2 * R.smallest), seen = [];
+      for (let d = step; d <= 500; d += step) for (const sg of [-1, 1]) {
+        const t = P.top + sg * d; if (t < 100) continue;
+        let r2; try { r2 = calculate(Object.assign({}, P, { top: t, sets: P.sets.map((x) => Object.assign({}, x, x.pct != null ? { target: Math.round(t * x.pct / 100) } : {})) })); } catch (e) { continue; }
+        seen.push({ t, r2, sc: score(r2), d });
+      }
+      const ok = seen.filter((x) => better(x.sc, base)).sort((a, b) => (a.sc[1] - b.sc[1]) || (a.d - b.d))[0];
+      if (ok) tryIt('top', { top: fw(ok.t) }, (r2) => '顶组改成 ' + fw(ok.t) + u(P) + (r2.maxDiff ? '：最多差 ' + fw(r2.maxDiff) + u(P) : '：每组都正好凑上') + '（每头动 ' + r2.moves + ' 次）');
+    }
+    /* 3. 就近 ↔ 不超过 */
+    if (P.mode === 'near' && R.rows.some((r) => r.diff > 0)) {
+      const nx = Object.assign({}, inp, { mode: 'down' }); let r2; try { r2 = calculate(nx); } catch (e) { r2 = null; }
+      if (r2 && r2.moves < R.moves) out.push({ id: 'mode', apply: nx, text: '凑不上时都往轻了取：每头少动 ' + (R.moves - r2.moves) + ' 次，最多轻 ' + fw(r2.maxDiff) + u(P), after: { moves: r2.moves, maxDiff: r2.maxDiff, short: r2.short.length } });
+    }
+    return out;
+  }
+
+  /* ── 导出 ── */
+  const stackTxt = (s) => (s.length ? s.map(fw).join(' + ') : '不加片');
+  const stepTxt = (m) => (m.n ? [m.off.length ? '拆 ' + m.off.slice().reverse().map(fw).join('、') : '', m.on.length ? '装 ' + m.on.map(fw).join('、') : ''].filter(Boolean).join('，') : '不用动');
+  function setName(r) { return (r.empty ? '空杆' : r.label) + (r.reps ? ' × ' + r.reps + ' 次' : '') + (r.times > 1 ? ' × ' + r.times + ' 组' : ''); }
+  function csvCell(v) { const s = String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  function toCSV(R, stamp) {
+    const P = R.P, L = [['最外面那片', '生成于 ' + stamp], ['结论', R.summary], ['单位', P.unit], ['杠', fw(P.bar)], ['一对卡扣', fw(P.collar)], ['顶组', fw(P.top)], []];
+    L.push(['第几行', '组', '目标', '实际', '差', '每头从里到外', '这一步每头怎么换', '每头动几片', '片数最少的装法']);
+    R.rows.forEach((r, i) => L.push([i + 1, setName(r), fw(r.target), fw(r.actual), (r.diff > 0 ? '+' : '') + fw(r.diff), stackTxt(r.stack), stepTxt(r.step), r.step.n, stackTxt(r.naive)]));
+    L.push(['练完', '', '', '', '', '', '拆光', R.strip, '']);
+    L.push(['合计', '', '', '', '', '', '每头动片', R.moves, '片数最少装法：' + R.naiveMoves]);
+    L.push([], ['片重', '几副']); P.kinds.forEach((k) => L.push([fw(k.w), k.n]));
+    L.push([], ['序号', '说明']); R.facts.forEach((x, i) => L.push([i + 1, x]));
+    return L.map((r) => r.map(csvCell).join(',')).join('\n') + '\n';
+  }
+  function toMD(R, stamp, sg) {
+    const P = R.P, o = [];
+    o.push('# 最外面那片', '', '生成时间：' + stamp + '　单位 ' + P.unit + '　默认例子是虚构的', '', '**' + R.summary + '**', '');
+    R.facts.forEach((x) => o.push('- ' + x));
+    o.push('', '## 装片清单（每头，从里到外）', '');
+    R.rows.forEach((r, i) => o.push('- [ ] ' + (i + 1) + '. ' + setName(r) + '：' + fw(r.actual) + (r.diff ? '（目标 ' + fw(r.target) + '，' + (r.diff > 0 ? '+' : '') + fw(r.diff) + '）' : '') + ' ｜ ' + stackTxt(r.stack) + ' ｜ ' + stepTxt(r.step)));
+    o.push('- [ ] 练完：拆光（每头 ' + R.strip + ' 片）');
+    if (sg && sg.length) { o.push('', '## 改一个条件'); sg.forEach((s) => o.push('- ' + s.text)); }
+    o.push('', '## 前提', '', '- 片按重的在里、轻的在外装，换片只能从最外面拆；「动一次」= 每头拆或装一片。', '- 只算重量和换片次数，不给训练计划或动作建议；杠和片写的是同一种单位。');
+    return o.join('\n') + '\n';
+  }
+
+  const DEFAULT = {
+    unit: 'kg', bar: '20', collar: '0', mode: 'near',
+    plates: '片重 几副\n20 1\n15 1\n10 2\n5 2\n2.5 2\n1.25 1',
+    top: '100',
+    sets: '目标 次数 组数\n空杆 10\n40% 5\n55% 5\n70% 3\n80% 2\n90% 1\n100% 5 ×3',
+  };
+  const PRESETS = [
+    ['默认：家里一套片，深蹲 100', DEFAULT],
+    ['健身房片够多，深蹲 100', { unit: 'kg', bar: '20', collar: '0', mode: 'near', plates: '片重 几副\n25 4\n20 4\n15 2\n10 4\n5 4\n2.5 2\n1.25 2', top: '100', sets: '目标 次数 组数\n空杆 10\n50% 5\n65% 3\n75% 2\n85% 1\n100% 5 ×3' }],
+    ['片不够：顶组 170', Object.assign({}, DEFAULT, { top: '170' })],
+    ['顶组 102.5，凑不齐', Object.assign({}, DEFAULT, { top: '102.5' })],
+    ['磅：卧推 225 lb', { unit: 'lb', bar: '45', collar: '0', mode: 'down', plates: '片重 几副\n45 4\n25 2\n10 2\n5 2\n2.5 2', top: '225', sets: '目标 次数 组数\n空杆 10\n50% 5\n70% 3\n85% 1\n100% 5 ×3' }],
+  ];
+
+  const api = { DEFAULT, PRESETS, KEYS, parse, reachTable, waysFor, moves, pick, calculate, suggestions, toCSV, toMD, fw, c2, stackTxt, stepTxt, setName, MAX_WAYS };
+  if (typeof module === 'object' && module.exports) module.exports = api; else root.AppCore = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+  </script>
+  <script>
+/* 最外面那片 · 界面层 */
+(function () {
+  'use strict';
+  const C = window.AppCore;
+  const KEY = 'outer-plate:v1';
+  const NAME = '最外面那片';
+  const copy = (o) => JSON.parse(JSON.stringify(o));
+  const DEFAULT = C.DEFAULT, PRESETS = C.PRESETS, KEYS = C.KEYS, fw = C.fw;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const PAL = ['#3c4a5c', '#8c5a3c', '#2f6a4a', '#c08a2b', '#5c6f8a', '#7a5a8c', '#8a8378', '#b8b0a3'];
+  let state = copy(DEFAULT);
+  let last = null;
+
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* 隐私模式忽略 */ } }
+  function load() {
+    try {
+      const o = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
+      const s = {};
+      for (const k of KEYS) { if (o[k] == null || typeof o[k] === 'object') return null; s[k] = String(o[k]).slice(0, 400); }
+      return s;
+    } catch (e) { return null; }
+  }
+  function fill() { KEYS.forEach((k) => { $(k).value = state[k]; }); }
+
+  /* 片的样子：高度随片重，颜色按片的种类 */
+  function plateStyle(P) {
+    const ws = P.kinds.map((k) => k.w), mx = Math.max(...ws);
+    return (w) => ({ h: 16 + 44 * Math.sqrt(w / mx), c: PAL[Math.max(0, ws.indexOf(w)) % PAL.length] });
+  }
+  function stackSVG(P, stack, on) {
+    const st = plateStyle(P), H = 64, pw = 13, gap = 2;
+    const n = stack.length, Wd = 34 + n * (pw + gap) + 46;
+    let x = 30, s = '<svg viewBox="0 0 ' + Wd + ' ' + H + '" width="' + Wd + '" height="' + H + '" role="img" aria-label="' + esc(C.stackTxt(stack)) + '">';
+    s += '<rect x="0" y="' + (H / 2 - 9) + '" width="22" height="18" rx="2" fill="#d8d2c8"/><rect x="22" y="' + (H / 2 - 4) + '" width="' + (Wd - 22) + '" height="8" fill="#bdb5a8"/>';
+    stack.forEach((w, i) => {
+      const t = st(w), isNew = i >= n - on;
+      s += '<rect x="' + x + '" y="' + ((H - t.h) / 2) + '" width="' + pw + '" height="' + t.h + '" rx="2" fill="' + t.c + '"' + (isNew ? ' stroke="#2f6a4a" stroke-width="2"' : '') + '><title>' + fw(w) + '</title></rect>';
+      x += pw + gap;
+    });
+    return s + '</svg>';
+  }
+  function actHTML(m) {
+    if (!m.n) return '不用动';
+    const a = [];
+    if (m.off.length) a.push('先拆 <s>' + m.off.slice().reverse().map(fw).join('、') + '</s>');
+    if (m.on.length) a.push('再装 <em>' + m.on.map(fw).join('、') + '</em>');
+    return a.join('，') + '（每头 ' + m.n + ' 次）';
+  }
+  function renderList(R) {
+    const P = R.P, u = ' ' + P.unit;
+    $('list').innerHTML = R.rows.map((r, i) => {
+      const off = r.diff ? '<span class="off">目标 ' + fw(r.target) + '，' + (r.diff > 0 ? '+' : '') + fw(r.diff) + '</span>' : '';
+      const tag = r.short ? ' <span class="tag">片不够</span>' : r.light ? ' <span class="tag">比空杆轻</span>' : '';
+      return '<div class="ck" data-row="' + i + '"><input type="checkbox" aria-label="第 ' + (i + 1) + ' 组做完"><div class="body">' +
+        '<div class="hd"><b>' + esc(C.setName(r)) + '</b><span class="w">' + fw(r.actual) + u + '</span>' + off + tag + '<span class="sm">每头 ' + esc(C.stackTxt(r.stack)) + '</span></div>' +
+        '<div class="stack">' + stackSVG(P, r.stack, r.step.on.length) + '</div>' +
+        '<div class="act">' + actHTML(r.step) + '</div></div></div>';
+    }).join('') + '<div class="ck" data-row="end"><input type="checkbox" aria-label="拆光"><div class="body"><div class="hd"><b>练完</b></div><div class="act">' + (R.strip ? '拆光：每头 <s>' + R.rows[R.rows.length - 1].stack.slice().reverse().map(fw).join('、') + '</s>（' + R.strip + ' 次）' : '杠上没有片') + '</div></div></div>';
+    [].forEach.call($('list').querySelectorAll('input[type=checkbox]'), (cb) => cb.addEventListener('change', () => cb.parentNode.classList.toggle('done', cb.checked)));
+  }
+  function renderVs(R) {
+    const save = R.naiveMoves - R.moves;
+    $('vs').innerHTML = '<div class="best"><h3>按这里挑的装法</h3><b>' + R.moves + ' 次</b><p>每头（两头 ' + R.moves * 2 + ' 次）</p></div>' +
+      '<div><h3>每组都用片数最少</h3><b>' + R.naiveMoves + ' 次</b><p>' + (save > 0 ? '多动 ' + save + ' 次' : '一样多') + '</p></div>';
+    $('tbl').innerHTML = '<tr><th>组</th><th>目标</th><th>实际</th><th>这里的装法</th><th>动</th><th>片数最少</th><th>动</th></tr>' +
+      R.rows.map((r) => '<tr><td>' + esc(C.setName(r)) + '</td><td>' + fw(r.target) + '</td><td' + (r.diff ? ' class="diff"' : '') + '>' + fw(r.actual) + '</td><td>' + esc(C.stackTxt(r.stack)) + '</td><td>' + r.step.n + '</td><td>' + esc(C.stackTxt(r.naive)) + '</td><td>' + r.nstep.n + '</td></tr>').join('') +
+      '<tr><td>练完拆光</td><td></td><td></td><td></td><td>' + R.strip + '</td><td></td><td>' + R.naiveStrip + '</td></tr>' +
+      '<tr class="sum"><td>每头合计</td><td></td><td></td><td></td><td>' + R.moves + '</td><td></td><td>' + R.naiveMoves + '</td></tr>';
+  }
+  function sugList(sg) {
+    const box = $('sugs'); box.innerHTML = '';
+    sg.forEach((x) => {
+      const d = document.createElement('div'); d.className = 'sug';
+      d.innerHTML = '<span>' + esc(x.text) + '</span>';
+      const bt = document.createElement('button'); bt.textContent = '照这样算'; bt.dataset.sug = x.id;
+      bt.addEventListener('click', () => { state = copy(x.apply); fill(); run(); });
+      d.appendChild(bt); box.appendChild(d);
+    });
+    $('sugCard').style.display = sg.length ? '' : 'none';
+  }
+  function run() {
+    [].forEach.call(document.querySelectorAll('.bad'), (e) => e.classList.remove('bad'));
+    try {
+      const R = C.calculate(state);
+      const sg = C.suggestions(state, R);
+      $('error').style.display = 'none'; $('out').style.display = ''; $('out2').style.display = '';
+      $('summary').textContent = R.summary; $('summary').className = R.short.length ? 'short' : '';
+      $('facts').innerHTML = R.facts.map((f) => '<li>' + esc(f) + '</li>').join('');
+      last = { r: R, sg };
+      renderList(R); renderVs(R); sugList(sg);
+    } catch (e) {
+      last = null;
+      if (e.field) { const el = $(e.field); if (el) el.classList.add('bad'); }
+      $('error').textContent = '算不了：' + e.message; $('error').style.display = 'block';
+      $('out').style.display = 'none'; $('out2').style.display = 'none';
+    }
+    save();
+  }
+
+  /* ── 导出 ── */
+  function stamp() { const d = new Date(), z = (n) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()); }
+  function download(name, blob) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
+  function wrap(g, t, w) {
+    const NOHEAD = '，。、；：！？）」』%·→｜';
+    const out = []; let line = [];
+    const toks = String(t).match(/[0-9][0-9,.%–]*(\s?(kg|lb|次|片|组))?|[A-Za-z_][A-Za-z0-9_.\-/]*|[\s\S]/g) || [];
+    const width = (a) => g.measureText(a.join('')).width;
+    for (const tk of toks) {
+      if (line.length && width(line.concat([tk])) > w) {
+        let carry = [tk];
+        while (line.length > 1 && (NOHEAD.indexOf(carry[0][0]) >= 0 || '（「『'.indexOf(line[line.length - 1]) >= 0)) carry.unshift(line.pop());
+        out.push(line.join(''));
+        line = carry; if (/^\s+$/.test(line[0])) line.shift();
+      } else line.push(tk);
+    }
+    if (line.length) out.push(line.join('')); return out;
+  }
+  function fitText(g, t, w) { let s = String(t); if (g.measureText(s).width <= w) return s; while (s.length > 1 && g.measureText(s + '…').width > w) s = s.slice(0, -1); return s + '…'; }
+  function drawPNG(Lx) {
+    const R = Lx.r, P = R.P, u = ' ' + P.unit;
+    const Wd = 1080, H = 1350, X = 70, TW = 940;
+    const cv = document.createElement('canvas'); cv.width = Wd; cv.height = H;
+    const g = cv.getContext('2d'), FF = '"PingFang SC","Microsoft YaHei",sans-serif';
+    g.fillStyle = '#f4f2ee'; g.fillRect(0, 0, Wd, H);
+    g.fillStyle = '#ffffff'; g.fillRect(36, 36, Wd - 72, H - 72);
+    g.fillStyle = '#736d64'; g.font = '24px ' + FF;
+    g.fillText(fitText(g, NAME + ' · 杠 ' + fw(P.bar) + u + ' · 顶组 ' + fw(P.top) + u + ' · ' + R.rows.length + ' 行组', TW), X, 98);
+    g.fillStyle = R.short.length ? '#8e2b1c' : '#23211e'; g.font = 'bold 32px ' + FF;
+    let y = 152;
+    wrap(g, R.summary, TW).slice(0, 3).forEach((l) => { g.fillText(l, X, y); y += 44; });
+    y += 10;
+    const st = plateStyle(P), rows = R.rows, n = rows.length;
+    const rowH = Math.min(96, Math.floor((H - 470 - y) / n));
+    const maxPl = Math.max(1, ...rows.map((r) => r.stack.length));
+    const sx = X + 300, pw = Math.max(8, Math.min(26, Math.floor((TW - 300 - 260) / maxPl) - 3));
+    rows.forEach((r) => {
+      const cy = y + rowH / 2;
+      g.fillStyle = '#23211e'; g.font = 'bold ' + Math.min(24, rowH - 30) + 'px ' + FF; g.fillText(fitText(g, C.setName(r), 280), X, cy - 4);
+      g.fillStyle = r.diff ? '#a33a26' : '#736d64'; g.font = Math.min(19, rowH - 34) + 'px ' + FF;
+      g.fillText(fitText(g, fw(r.actual) + u + (r.diff ? '（目标 ' + fw(r.target) + '）' : '') + (r.short ? ' 片不够' : ''), 280), X, cy + 22);
+      g.fillStyle = '#bdb5a8'; g.fillRect(sx - 20, cy - 4, 20 + r.stack.length * (pw + 3) + 30, 8);
+      let x = sx; const k = Math.min(1, (rowH - 8) / 64);
+      r.stack.forEach((w, i) => {
+        const t = st(w), h = t.h * k;
+        g.fillStyle = t.c; g.fillRect(x, cy - h / 2, pw, h);
+        if (i >= r.stack.length - r.step.on.length) { g.strokeStyle = '#2f6a4a'; g.lineWidth = 2; g.strokeRect(x, cy - h / 2, pw, h); }
+        x += pw + 3;
+      });
+      g.textAlign = 'right'; g.fillStyle = '#4d4840'; g.font = Math.min(19, rowH - 34) + 'px ' + FF;
+      g.fillText(fitText(g, r.step.n ? '动 ' + r.step.n + ' 次' : '不用动', 120), X + TW, cy - 4);
+      g.fillStyle = '#847e74'; { const room = X + TW - (sx + r.stack.length * (pw + 3) + 40), t = C.stackTxt(r.stack); let fs = Math.min(17, rowH - 36); g.font = fs + 'px ' + FF; while (fs > 12 && g.measureText(t).width > room) { fs--; g.font = fs + 'px ' + FF; } g.fillText(fitText(g, t, room), X + TW, cy + 20); }
+      g.textAlign = 'left';
+      y += rowH;
+    });
+    y += 18;
+    const cw = (TW - 10) / 2;
+    [['按这里挑的装法', R.moves + ' 次', '每头，含练完拆光 ' + R.strip + ' 次', true], ['每组都用片数最少', R.naiveMoves + ' 次', R.naiveMoves > R.moves ? '多动 ' + (R.naiveMoves - R.moves) + ' 次' : '一样多', false]].forEach((w, i) => {
+      const bx = X + i * (cw + 10);
+      g.fillStyle = w[3] ? '#f3f5f8' : '#f6f4f0'; g.fillRect(bx, y, cw, 112);
+      if (w[3]) { g.strokeStyle = '#3c4a5c'; g.lineWidth = 2; g.strokeRect(bx, y, cw, 112); }
+      g.fillStyle = '#736d64'; g.font = '20px ' + FF; g.fillText(w[0], bx + 16, y + 32);
+      g.fillStyle = '#23211e'; g.font = 'bold 36px ' + FF; g.fillText(w[1], bx + 16, y + 74);
+      g.fillStyle = '#736d64'; g.font = '18px ' + FF; g.fillText(fitText(g, w[2], cw - 30), bx + 16, y + 100);
+    });
+    y += 150;
+    g.font = '21px ' + FF; g.fillStyle = '#23211e';
+    const items = R.facts.concat(Lx.sg.map((q) => '改一个条件：' + q.text));
+    for (const f of items) {
+      const ls = wrap(g, '· ' + f, TW);
+      if (y + (ls.length - 1) * 30 > H - 130) break;
+      ls.forEach((l) => { g.fillText(l, X, y); y += 30; }); y += 6;
+    }
+    g.fillStyle = '#847e74'; g.font = '18px ' + FF;
+    wrap(g, '每头从里到外装，重的在里；动一次 = 拆或装一片。只算重量和换片次数，不是训练建议。默认例子是虚构的。', TW).forEach((l, i) => g.fillText(l, X, H - 96 + i * 27));
+    return Promise.resolve(cv);
+  }
+  function backup() {
+    const R = last.r;
+    return { app: NAME, version: 1, savedAt: stamp(), input: copy(state), result: { summary: R.summary, unit: R.P.unit, movesPerSide: R.moves, fewestPlatesMovesPerSide: R.naiveMoves, maxDiff: +fw(R.maxDiff),
+      sets: R.rows.map((r) => ({ set: C.setName(r), target: +fw(r.target), actual: +fw(r.actual), perSideInnerToOuter: r.stack.map((w) => +fw(w)), off: r.step.off.map((w) => +fw(w)), on: r.step.on.map((w) => +fw(w)), moves: r.step.n })) } };
+  }
+  function init() {
+    KEYS.forEach((k) => $(k).addEventListener(k === 'unit' || k === 'mode' ? 'change' : 'input', () => { state[k] = $(k).value; run(); }));
+    PRESETS.forEach((p) => {
+      const b = document.createElement('button'); b.className = 'ghost'; b.textContent = p[0];
+      b.addEventListener('click', () => { state = copy(p[1]); fill(); run(); });
+      $('presets').appendChild(b);
+    });
+    $('reset').addEventListener('click', () => { state = copy(DEFAULT); fill(); run(); });
+    $('dlCSV').addEventListener('click', () => { if (last) download(NAME + '.csv', new Blob(['\ufeff' + C.toCSV(last.r, stamp())], { type: 'text/csv;charset=utf-8' })); });
+    $('dlMD').addEventListener('click', () => { if (last) download(NAME + '.md', new Blob([C.toMD(last.r, stamp(), last.sg)], { type: 'text/markdown;charset=utf-8' })); });
+    $('dlJSON').addEventListener('click', () => { if (last) download(NAME + '-备份.json', new Blob([JSON.stringify(backup(), null, 2)], { type: 'application/json' })); });
+    $('dlPNG').addEventListener('click', () => { if (last) drawPNG(last).then((cv) => cv.toBlob((b) => download(NAME + '-1080x1350.png', b), 'image/png')); });
+    state = load() || copy(DEFAULT);
+    fill(); run();
+    window.__ex = { last: () => last, state: () => state, presets: PRESETS, DEFAULT, drawPNG };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+  </script>
+</body>
+</html>
